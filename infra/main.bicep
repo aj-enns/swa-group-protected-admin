@@ -44,8 +44,8 @@ resource staticWebApp 'Microsoft.Web/staticSites@2023-12-01' = {
 @description('The default hostname of the Static Web App')
 output staticWebAppDefaultHostname string = staticWebApp.properties.defaultHostname
 
-@description('The deployment token for the Static Web App')
-output staticWebAppDeploymentToken string = staticWebApp.listSecrets().properties.apiKey
-
 @description('The resource ID of the Static Web App')
 output staticWebAppId string = staticWebApp.id
+
+@description('The name of the Static Web App')
+output staticWebAppName string = staticWebApp.name
