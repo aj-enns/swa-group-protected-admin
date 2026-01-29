@@ -138,10 +138,18 @@ jobs:
           ls -la
           echo "=== dist directory ==="
           ls -la dist || echo "dist not found"
+          echo "=== dist contents (recursive) ==="
+          find dist -type f | head -20 || echo "dist not found"
           echo "=== api directory ==="
           ls -la api
-          echo "=== api/secure-admin directory ==="
-          ls -la api/secure-admin
+          echo "=== api/src/functions directory ==="
+          ls -la api/src/functions || echo "api/src/functions not found"
+          echo "=== api/host.json ==="
+          cat api/host.json
+          echo "=== api/package.json ==="
+          cat api/package.json
+          echo "=== api/node_modules check ==="
+          ls api/node_modules/@azure/functions 2>/dev/null && echo "Azure Functions SDK found" || echo "Azure Functions SDK NOT found"
 
       - name: Build and Deploy Static Web App
         uses: Azure/static-web-apps-deploy@v1
@@ -157,6 +165,8 @@ jobs:
           skip_app_build: true
         env:
           VERBOSE: true
+          DEBUG: "*"
+          SWA_CLI_DEBUG: "*"
 
   # ============================================
   # Close Pull Request (cleanup staging)
