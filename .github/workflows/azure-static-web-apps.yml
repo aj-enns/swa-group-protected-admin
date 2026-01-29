@@ -153,13 +153,10 @@ jobs:
           app_location: "/"
           api_location: "api"
           output_location: "dist"
-          # Skip build - we already built above
+          # Skip app build - we already built above, let Oryx handle the API
           skip_app_build: true
-          skip_api_build: true
         env:
           VERBOSE: true
-          SWA_CLI_API_LANGUAGE: node
-          SWA_CLI_API_VERSION: "20"
 
   # ============================================
   # Close Pull Request (cleanup staging)
