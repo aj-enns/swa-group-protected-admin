@@ -158,6 +158,8 @@ jobs:
           skip_api_build: true
         env:
           VERBOSE: true
+          SWA_CLI_API_LANGUAGE: node
+          SWA_CLI_API_VERSION: "20"
 
   # ============================================
   # Close Pull Request (cleanup staging)
