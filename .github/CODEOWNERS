@@ -1,0 +1,16 @@
+# CODEOWNERS - Define who must review and approve changes
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for all files in the repository
+* @aj-enns
+
+# Infrastructure changes require owner approval
+/infra/ @aj-enns
+
+# GitHub Actions workflows require owner approval
+/.github/ @aj-enns
+
+# Security-sensitive files require owner approval
+/api/ @aj-enns
+/src/msalConfig.js @aj-enns
+SECURITY.md @aj-enns
