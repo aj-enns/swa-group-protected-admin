@@ -1,0 +1,53 @@
+name: Deploy Infrastructure
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AZURE_RESOURCE_GROUP: rg-swa-group-protected-admin
+  AZURE_LOCATION: eastus2
+  STATIC_WEB_APP_NAME: swa-group-protected-admin
+
+jobs:
+  deploy-infrastructure:
+    name: Deploy Infrastructure
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Create Resource Group (if not exists)
+        uses: azure/cli@v2
+        with:
+          azcliversion: latest
+          inlineScript: |
+            az group create \
+              --name ${{ env.AZURE_RESOURCE_GROUP }} \
+              --location ${{ env.AZURE_LOCATION }} \
+              --tags environment=production application=swa-group-protected-admin
+
+      - name: Deploy Bicep Template
+        id: deploy
+        uses: azure/arm-deploy@v2
+        with:
+          resourceGroupName: ${{ env.AZURE_RESOURCE_GROUP }}
+          template: ./infra/main.bicep
+          parameters: ./infra/main.bicepparam
+          failOnStdErr: false
+
+      - name: Show Deployment Outputs
+        run: |
+          echo "Static Web App Name: ${{ env.STATIC_WEB_APP_NAME }}"
+          echo "Resource Group: ${{ env.AZURE_RESOURCE_GROUP }}"
