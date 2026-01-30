@@ -108,13 +108,26 @@ az ad app update --id <APP_ID> --app-roles '[
 az ad sp create --id <APP_ID>
 ```
 
-### 5. Add Redirect URIs
+### 5. Add SPA Redirect URIs
+
+**Important:** Use SPA redirect URIs (not Web) for MSAL browser authentication:
 
 ```bash
-az ad app update --id <APP_ID> \
-  --web-redirect-uris \
-    "http://localhost:5173/" \
-    "https://YOUR-SWA-URL.azurestaticapps.net/"
+# First, get the app's object ID (different from appId)
+APP_OBJECT_ID=$(az ad app show --id <APP_ID> --query id -o tsv)
+
+# Add SPA redirect URIs using Graph API
+az rest --method PATCH \
+  --uri "https://graph.microsoft.com/v1.0/applications/$APP_OBJECT_ID" \
+  --headers "Content-Type=application/json" \
+  --body '{
+    "spa": {
+      "redirectUris": [
+        "http://localhost:5173/",
+        "https://YOUR-SWA-URL.azurestaticapps.net/"
+      ]
+    }
+  }'
 ```
 
 ### 6. Configure the Application
@@ -173,12 +186,13 @@ Visit http://localhost:5173 and sign in!
 
 ```
 ├── .github/workflows/
-│   └── azure-static-web-apps.yml  # CI/CD pipeline
+│   ├── deploy-infrastructure.yml  # Manual infra deployment
+│   └── deploy-application.yml     # Manual app deployment
 ├── api/
 │   ├── host.json                  # Azure Functions config
 │   ├── package.json
 │   └── src/functions/
-│       └── secure-admin.js        # Protected API endpoint
+│       └── secure-admin.js        # Protected API endpoint (V4 model)
 ├── infra/
 │   ├── main.bicep                 # Infrastructure as Code
 │   └── main.bicepparam            # Bicep parameters
@@ -327,14 +341,20 @@ az deployment group create \
 
 ### GitHub Actions
 
-The workflow in `.github/workflows/azure-static-web-apps.yml`:
+This project uses two separate **manual** workflows:
 
-1. **Deploys infrastructure** using Bicep
-2. **Builds the React app** with Vite
-3. **Deploys to Static Web App** with the API
+| Workflow | File | Purpose |
+|----------|------|---------|  
+| Deploy Infrastructure | `deploy-infrastructure.yml` | Creates Azure resources via Bicep |
+| Deploy Application | `deploy-application.yml` | Builds and deploys the React app + API |
+
+To run a workflow:
+1. Go to **Actions** tab in GitHub
+2. Select the workflow
+3. Click **Run workflow** → **Run workflow**
 
 Required GitHub Secrets:
-- `AZURE_CLIENT_ID` - Service principal for GitHub Actions
+- `AZURE_CLIENT_ID` - Service principal for GitHub Actions (workload identity)
 - `AZURE_TENANT_ID` - Your Entra ID tenant
 - `AZURE_SUBSCRIPTION_ID` - Your Azure subscription
 
@@ -370,9 +390,28 @@ This solution uses **App Roles** because:
 
 ### "AADSTS50011: Reply URL does not match"
 
-Add the exact URL to your app registration:
+Ensure you're using **SPA** redirect URIs (not Web):
 ```bash
-az ad app update --id <APP_ID> --web-redirect-uris "https://your-exact-url/"
+APP_OBJECT_ID=$(az ad app show --id <APP_ID> --query id -o tsv)
+az rest --method PATCH \
+  --uri "https://graph.microsoft.com/v1.0/applications/$APP_OBJECT_ID" \
+  --headers "Content-Type=application/json" \
+  --body '{"spa":{"redirectUris":["https://your-exact-url/"]}}'
+```
+
+### MIME type error for JavaScript modules
+
+If you see "Expected a JavaScript module but got application/octet-stream", ensure your `staticwebapp.config.json` includes:
+```json
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/assets/*", "*.js", "*.css"]
+  },
+  "mimeTypes": {
+    ".js": "text/javascript"
+  }
+}
 ```
 
 ## Resources
