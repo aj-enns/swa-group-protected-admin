@@ -157,10 +157,10 @@ jobs:
           azure_static_web_apps_api_token: ${{ steps.swa-token.outputs.deployment_token }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          # App configuration
-          app_location: "/"
+          # App configuration - point directly to built output
+          app_location: "/dist"
           api_location: "api"
-          output_location: "dist"
+          output_location: ""
           # Skip app build - we already built above, let Oryx handle the API
           skip_app_build: true
         env:
