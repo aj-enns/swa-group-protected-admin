@@ -16,12 +16,12 @@ Many applications need to restrict certain pages or features to specific users. 
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                        User Browser                              │
+│                        User Browser                             │
 └─────────────────────────┬───────────────────────────────────────┘
                           │
                           ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│              Azure Static Web App                                │
+│              Azure Static Web App                               │
 │  ┌─────────────────────────────────────────────────────────────┐│
 │  │  React SPA (Vite)                                           ││
 │  │  - MSAL React for authentication                            ││
@@ -36,7 +36,7 @@ Many applications need to restrict certain pages or features to specific users. 
                           │
                           ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│              Microsoft Entra ID                                  │
+│              Microsoft Entra ID                                 │
 │  - App Registration with App Roles                              │
 │  - User/Group role assignments                                  │
 │  - ID tokens with "roles" claim                                 │
