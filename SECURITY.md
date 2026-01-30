@@ -2,6 +2,102 @@
 
 This document explains the security architecture for role-based access control (RBAC) in this application.
 
+## Authentication Flow
+
+The following diagram shows the complete authentication flow from sign-in to accessing protected resources:
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Browser
+    participant React as React App
+    participant MSAL as MSAL Library
+    participant Entra as Microsoft Entra ID
+    participant API as Azure Function API
+
+    Note over User,API: 🔐 Sign-In Flow
+    
+    User->>Browser: Click "Sign In"
+    Browser->>React: onClick event
+    React->>MSAL: loginPopup(loginRequest)
+    MSAL->>Browser: Open popup window
+    Browser->>Entra: Navigate to login.microsoftonline.com
+    Entra->>User: Show login form
+    User->>Entra: Enter credentials + MFA
+    Entra->>Entra: Validate credentials
+    Entra->>Entra: Look up app role assignments
+    Entra->>Browser: Return ID token (with roles claim)
+    Browser->>MSAL: Token received
+    MSAL->>MSAL: Decode & validate token
+    MSAL->>MSAL: Store in localStorage
+    MSAL->>React: Return account object
+    React->>Browser: Update UI (show user info)
+
+    Note over User,API: 🛡️ Accessing Protected Route
+
+    User->>Browser: Navigate to /admin
+    Browser->>React: Route change
+    React->>MSAL: Get active account
+    MSAL->>React: Return account with idTokenClaims
+    React->>React: RequireRole checks roles[]
+    
+    alt User has "Admin" role
+        React->>Browser: Render AdminHome component
+    else User lacks role
+        React->>Browser: Redirect to /not-authorized
+    end
+
+    Note over User,API: 🔒 API Call with Token
+
+    React->>MSAL: acquireTokenSilent()
+    MSAL->>React: Return access token
+    React->>API: GET /api/secure-admin<br/>Authorization: Bearer <token>
+    API->>API: Decode JWT token
+    API->>API: Check "roles" claim
+    
+    alt User has "Admin" role
+        API->>React: 200 OK + data
+        React->>Browser: Display data
+    else User lacks role
+        API->>React: 403 Forbidden
+        React->>Browser: Show error
+    end
+```
+
+## Token Lifecycle
+
+```mermaid
+flowchart LR
+    subgraph "Sign In"
+        A[User clicks Sign In] --> B[MSAL opens popup]
+        B --> C[Entra ID authenticates]
+        C --> D[Token returned]
+    end
+    
+    subgraph "Token Storage"
+        D --> E[MSAL decodes token]
+        E --> F[Stored in localStorage]
+        F --> G[Account object created]
+    end
+    
+    subgraph "Token Usage"
+        G --> H{Route protected?}
+        H -->|Yes| I[RequireRole checks roles]
+        H -->|No| J[Render page]
+        I -->|Has role| J
+        I -->|No role| K[Redirect to /not-authorized]
+    end
+    
+    subgraph "API Calls"
+        J --> L[API request needed]
+        L --> M[MSAL gets token]
+        M --> N[Add to Authorization header]
+        N --> O[API validates token]
+    end
+```
+
+---
+
 ## Two Layers of Protection
 
 ### 1. Client-Side Protection (React)
