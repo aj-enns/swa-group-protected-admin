@@ -3,6 +3,7 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import { MsalProvider } from "@azure/msal-react";
 import { msalInstance } from "./msalConfig";
+import "./index.css";
 
 // MSAL must be initialized before rendering
 msalInstance.initialize().then(() => {
