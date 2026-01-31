@@ -1,0 +1,12 @@
+{
+  "name": "swa-builtin-auth-api",
+  "version": "1.0.0",
+  "main": "src/functions/*.js",
+  "scripts": {
+    "start": "func start",
+    "test": "echo \"No tests configured\""
+  },
+  "dependencies": {
+    "@azure/functions": "^4.0.0"
+  }
+}

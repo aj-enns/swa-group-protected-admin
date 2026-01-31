@@ -2,6 +2,15 @@ name: Deploy Application
 
 on:
   workflow_dispatch:
+    inputs:
+      example:
+        description: 'Which auth example to deploy'
+        required: true
+        default: 'msal-custom-auth'
+        type: choice
+        options:
+          - msal-custom-auth
+          - swa-builtin-auth
 
 permissions:
   id-token: write
@@ -10,10 +19,11 @@ permissions:
 env:
   AZURE_RESOURCE_GROUP: rg-swa-group-protected-admin
   STATIC_WEB_APP_NAME: swa-group-protected-admin
+  APP_FOLDER: ${{ github.event.inputs.example }}
 
 jobs:
   deploy-application:
-    name: Build and Deploy Application
+    name: Build and Deploy (${{ github.event.inputs.example }})
     runs-on: ubuntu-latest
     
     steps:
@@ -45,15 +55,19 @@ jobs:
         with:
           node-version: '20'
           cache: 'npm'
+          cache-dependency-path: ${{ env.APP_FOLDER }}/package-lock.json
 
       - name: Install dependencies
+        working-directory: ${{ env.APP_FOLDER }}
         run: npm ci
 
       - name: Build application
+        working-directory: ${{ env.APP_FOLDER }}
         run: npm run build
 
       - name: Install API dependencies
-        run: cd api && npm install
+        working-directory: ${{ env.APP_FOLDER }}/api
+        run: npm install
 
       - name: Deploy Static Web App
         uses: Azure/static-web-apps-deploy@v1
@@ -61,7 +75,7 @@ jobs:
           azure_static_web_apps_api_token: ${{ steps.swa-token.outputs.deployment_token }}
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           action: "upload"
-          app_location: "/dist"
-          api_location: "api"
+          app_location: "${{ env.APP_FOLDER }}/dist"
+          api_location: "${{ env.APP_FOLDER }}/api"
           output_location: ""
           skip_app_build: true
